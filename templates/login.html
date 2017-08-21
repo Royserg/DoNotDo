@@ -12,6 +12,7 @@ Login
 {% endblock %}
 
 {% block content %}
+{{ utils.flashed_messages() }}
 <div class="container">
 
   <form class="form-signin" method="POST" action="/login">

@@ -22,20 +22,39 @@ DEBUG = True
 
 # User Model
 class User(UserMixin, db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	username = db.Column(db.String(15), unique=True, nullable=False)
-	email = db.Column(db.String(120), unique=True, nullable=False)
-	password = db.Column(db.String(80))
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(15), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(80))
+    expenses = db.relationship('Expense', backref='owner', lazy='dynamic')
+    
+    def __init__(self, username, email, password):
+        self.username = username
+        self.email = email
+        self.password = password
 
-	def __init__(self, username, email, password):
-		self.username = username
-		self.email = email
-		self.password = password
+    def __repr__(self):
+        return '<User %r>' % self.username
 
-	def __repr__(self):
-		return '<User %r>' % self.username
-
-
+    
+# Model Expenses
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cost = db.Column(db.Float)
+    description = db.Column(db.String(80))
+    date = db.Column(db.DateTime)
+    is_paid = db.Column(db.Boolean)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    def __init__(self, cost, description, owner_id, date=None, is_paid=None):
+        self.cost = cost
+        self.description = description
+        if date is None:
+            date = datetime.datetime.utcnow()
+        self.data = date
+        self.owner_id = owner_id
+        self.is_paid = is_paid
+    
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -56,6 +75,29 @@ def index():
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
 	return render_template('dashboard.html', name=current_user.username)
+
+
+# Expenses Route
+@app.route('/expenses', methods=['GET', 'POST'])
+@login_required
+def expenses():
+    form = forms.ExpenseForm()
+    expenses = Expense.query.filter_by(owner_id = current_user.id).all()
+    
+    if form.validate_on_submit():
+        new_expense = Expense(
+            cost = form.cost.data,
+            description = form.description.data,
+            date = form.date.data,
+            is_paid = form.is_paid.data,
+            owner_id = current_user.id
+        )
+        db.session.add(new_expense)
+        db.session.commit()
+        flash('Expense Added', 'success')
+        return redirect(url_for('expenses'))
+    return render_template('expenses.html', form=form, expenses=expenses)
+
 
 
 # Sign Up Route
@@ -106,4 +148,5 @@ def logout():
 
 
 if __name__ == '__main__':
-   app.run(debug=True)
+    db.create_all()
+    app.run(debug=True)

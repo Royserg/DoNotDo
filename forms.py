@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField
+from wtforms import (StringField, PasswordField, BooleanField, DecimalField,                             DateTimeField)
 from wtforms.validators import InputRequired, Email, Length, EqualTo
+
+import datetime
 
 
 class NotDoForm(FlaskForm):
@@ -20,3 +22,14 @@ class SignUpForm(FlaskForm):
 	password = PasswordField('Password', validators=[InputRequired(), EqualTo('password2', message='Passwords must match')])
 	password2 = PasswordField('Confirm Password', validators=[InputRequired()])
 
+    
+class ExpenseForm(FlaskForm):
+    cost = DecimalField('Cost', validators=[InputRequired()])
+    description = StringField('Description', validators=[InputRequired()])
+    date = DateTimeField('Date', 
+                          format="%d-%m-%Y",
+                          default=datetime.datetime.today,
+                          validators=[InputRequired()],
+                         )
+    is_paid = BooleanField('Paid', default=False)
+    

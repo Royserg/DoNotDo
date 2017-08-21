@@ -11,6 +11,7 @@ Dashboard
 
 
 {% block content %}
+    {{ utils.flashed_messages() }}
     <div class="container">
 
       <h2>Welcome, {{ name }}</h2>
