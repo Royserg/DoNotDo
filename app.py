@@ -3,6 +3,7 @@ from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from sqlalchemy.sql import func, label
 
 import forms
 # import models
@@ -50,8 +51,8 @@ class Expense(db.Model):
         self.cost = cost
         self.description = description
         if date is None:
-            date = datetime.datetime.utcnow()
-        self.data = date
+            date = datetime.datetime.today()
+        self.date = date
         self.owner_id = owner_id
         self.is_paid = is_paid
     
@@ -83,6 +84,9 @@ def dashboard():
 def expenses():
     form = forms.ExpenseForm()
     expenses = Expense.query.filter_by(owner_id = current_user.id).all()
+    expenses_sum = db.session.query(Expense,
+                    func.sum(Expense.cost).label("total")).filter_by(owner_id = current_user.id).first()
+                                    
     
     if form.validate_on_submit():
         new_expense = Expense(
@@ -96,7 +100,7 @@ def expenses():
         db.session.commit()
         flash('Expense Added', 'success')
         return redirect(url_for('expenses'))
-    return render_template('expenses.html', form=form, expenses=expenses)
+    return render_template('expenses.html', form=form, expenses=expenses, expenses_sum=expenses_sum)
 
 
 
