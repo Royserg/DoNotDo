@@ -103,6 +103,27 @@ def expenses():
     return render_template('expenses.html', form=form, expenses=expenses, expenses_sum=expenses_sum)
 
 
+@app.route('/expense/delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def expense_delete(id):
+	expense = Expense.query.get(id)
+	db.session.delete(expense)
+	db.session.commit()
+
+	return redirect(url_for('expenses'))
+
+@app.route('/expense/paid/<int:id>', methods=['GET', 'POST'])
+@login_required
+def expense_paid(id):
+	expense = Expense.query.get(id)
+	if expense.is_paid:
+		expense.is_paid = False
+	else:
+		expense.is_paid = True
+
+	db.session.commit()
+	return redirect(url_for('expenses'))
+
 
 # Sign Up Route
 @app.route('/signup', methods=['GET', 'POST'])
